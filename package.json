@@ -1,0 +1,54 @@
+{
+  "name": "xenter",
+  "version": "0.0.2",
+  "description": "Xenter UOBK RSUD MOH SALEH",
+  "productName": "Xenter",
+  "author": "cvudumbarainformatika <cvudumbarainformatika@gmail.com>",
+  "private": true,
+  "scripts": {
+    "lint": "eslint --ext .js,.vue ./",
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "dependencies": {
+    "@quasar/extras": "^1.0.0",
+    "@vueuse/core": "^10.8.0",
+    "audit": "^0.0.6",
+    "axios": "^1.6.2",
+    "dayjs": "^1.11.10",
+    "echarts": "^5.6.0",
+    "fix": "^0.0.6",
+    "keyboardjs": "^2.7.0",
+    "kioskboard": "^2.3.0",
+    "leaflet": "^1.9.4",
+    "pinia": "^2.0.11",
+    "quasar": "^2.6.0",
+    "vue": "^3.0.0",
+    "vue-echarts": "^7.0.3",
+    "vue-router": "^4.0.0",
+    "vue3-lottie": "^2.4.0",
+    "vue3-qrcode-reader": "^0.0.1"
+  },
+  "devDependencies": {
+    "@quasar/app-vite": "^1.0.0",
+    "autoprefixer": "^10.4.2",
+    "eslint": "^8.10.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "postcss": "^8.4.14",
+    "workbox-build": "^6.6.0",
+    "workbox-cacheable-response": "^6.6.0",
+    "workbox-core": "^6.6.0",
+    "workbox-expiration": "^6.6.0",
+    "workbox-precaching": "^6.6.0",
+    "workbox-routing": "^6.6.0",
+    "workbox-strategies": "^6.6.0"
+  },
+  "engines": {
+    "node": "^22 || ^20 || ^18",
+    "npm": ">= 10.0.0",
+    "yarn": ">= 1.21.1"
+  }
+}
