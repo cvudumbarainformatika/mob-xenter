@@ -124,6 +124,7 @@ onMounted(() => {
   updateTime()
   timeInterval = setInterval(updateTime, 1000)
   console.log('mounted local', bisaLogin.value.includes(auth.user.email))
+  console.log('scheduleStorrage object:', scheduleStorrage) // Tambahan ini
 })
 
 onUnmounted(() => {
