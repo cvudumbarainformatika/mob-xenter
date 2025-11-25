@@ -15,7 +15,7 @@
 <script setup>
 import { useLoginXenterStore } from 'src/stores/xenter/auth/login'
 import { useScanXenterStore } from 'src/stores/xenter/scanner/scan'
-import { QrcodeStream } from 'vue3-qrcode-reader'
+import { QrcodeStream } from 'qrcode-reader-vue3'
 import { useXenterAppStore } from 'src/stores/xenter'
 import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'

@@ -30,7 +30,7 @@
         </div>
         <qrcode-stream v-else
           @init="onInit"
-          @detect="onDetect"
+          
           @decode="onDecodeString"
         >
         <div class="column fit flex-center">
@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import { QrcodeStream } from 'vue3-qrcode-reader'
+import { QrcodeStream } from 'qrcode-reader-vue3'
 import { useScanXenterStore } from 'src/stores/xenter/scanner/scan'
 import { useRouter } from 'vue-router'
 import { useXenterAppStore } from 'src/stores/xenter'

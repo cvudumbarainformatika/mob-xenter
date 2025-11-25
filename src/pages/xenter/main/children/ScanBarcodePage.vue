@@ -8,24 +8,10 @@
     </template> -->
     <template #content>
       <!-- <div class="column full-height"> -->
-        <AppErrorXenter v-if="!app.loading && err !== null"
-          :msg="err"
-          :status="app.status"
-          @ok="onErrorOk"
-        />
-        <qrcode-stream v-else
-          @init="onInit"
-          @detect="onDetect"
-          @decode="onDecodeString"
-        />
-      <!-- </div> -->
-
-    </template>
-  </app-page>
 </template>
 
 <script setup>
-import { QrcodeStream } from 'vue3-qrcode-reader'
+import { QrcodeStream } from 'qrcode-reader-vue3'
 import { useScanXenterStore } from 'src/stores/xenter/scanner/scan'
 import { useRouter } from 'vue-router'
 import { useXenterAppStore } from 'src/stores/xenter'
@@ -117,22 +103,6 @@ function onDecodeString (val) {
     store.kirimQr(form).then(() => {
       router.replace({ path: '/' })
     })
-  }
-}
-
-async function onDetect (promise) {
-  try {
-    const {
-      content, // decoded String
-      location // QR code coordinates
-    } = await promise
-
-    // ...
-    console.log('content', content)
-    console.log('location', location)
-  } catch (error) {
-    // ...
-    console.log(error)
   }
 }
 
