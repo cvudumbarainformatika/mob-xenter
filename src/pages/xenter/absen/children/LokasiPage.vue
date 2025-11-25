@@ -44,7 +44,7 @@ import { useGeolocation } from '@vueuse/core'
 import ScannerComponent from 'src/components/ScannerComponent.vue'
 import { useRouter } from 'vue-router'
 import { api } from 'src/boot/axios'
-import { useAbsenContext } from 'src/pages/xenter/absen/absenContext';
+import { useAbsenContext } from 'src/pages/xenter/absen/absenContext'
 
 const props = defineProps({
   kondisi: { type: String, default: null },
@@ -52,7 +52,6 @@ const props = defineProps({
   jam: { type: String, default: null },
   kategory: { type: [Number, String], default: null }
 })
-
 const scan = ref(false)
 const mapRef = ref()
 const lat = ref(0)
