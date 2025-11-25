@@ -6,8 +6,10 @@
           <q-card-section>
             <div class="column flex-center">
               <div class="q-my-lg text-weight-bold">
-                <span v-if="isUserFar">Kamu Jauh Dari Kantor</span>
-                <span v-else>Kamu Berada di Area Kantor</span>
+                <span v-if="offlineError" class="text-negative">Tidak Ada Koneksi Internet</span>
+                <span v-else-if="accuracyError" class="text-negative">Akurasi Lokasi Rendah ({{ currentAccuracy.toFixed(1) }}m)</span>
+                <span v-else-if="isUserFar" class="text-negative">Kamu Jauh Dari Kantor</span>
+                <span v-else class="text-primary">Kamu Berada di Area Kantor</span>
               </div>
               <div class="q-gutter-md">
                 <q-btn class="q-mb-lg" color="negative" to="/absen">Kembali</q-btn>
@@ -15,7 +17,7 @@
                   class="q-mb-lg"
                   color="primary"
                   @click="scan = true"
-                  :disable="isUserFar && !forceAbsen"
+                  :disable="(isUserFar && !forceAbsen) || !isOnline || accuracyError"
                 >
                   Lanjut Absen
                 </q-btn>
@@ -33,6 +35,12 @@
                 Status:
                 <span :class="!isUserFar ? 'text-primary' : 'text-negative'">
                   {{ !isUserFar ? 'Di dalam area kantor' : 'Di luar area' }}
+                </span>
+              </div>
+              <div class="f-12">
+                Akurasi GPS:
+                <span :class="!accuracyError ? 'text-primary' : 'text-negative'">
+                  {{ currentAccuracy.toFixed(1) }} m
                 </span>
               </div>
             </div>
@@ -69,12 +77,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useGeolocation } from '@vueuse/core'
+import { ref, watch } from 'vue'
+import { useGeolocation, useNetwork } from '@vueuse/core'
 import ScannerComponent from 'src/components/ScannerComponent.vue'
-import RealtimeMap from 'src/pages/xenter/absen/RealtimeMap.vue' // Impor RealtimeMap
+import RealtimeMap from 'src/pages/xenter/absen/RealtimeMap.vue'
 import { useRouter } from 'vue-router'
-// eslint-disable-next-line no-unused-vars
 import { api } from 'src/boot/axios'
 import { useAbsenContext } from 'src/pages/xenter/absen/absenContext'
 
@@ -89,20 +96,49 @@ const scan = ref(false)
 const forceAbsen = ref(false) // Untuk debugging atau override jika diperlukan
 const currentDistance = ref(0)
 const isUserFar = ref(true)
+const currentAccuracy = ref(0) // Akurasi GPS
+const accuracyThreshold = ref(50) // Batas akurasi dalam meter
+const accuracyError = ref(false) // Status error akurasi
+const offlineError = ref(false) // Status error offline
 
 // Lokasi kantor dan radius - bisa dipindahkan ke store atau config
 const lokasiKantor = ref({ lat: -7.7449802744747185, lng: 113.210602 })
-const radius = ref(100) // Radius kantor dalam meter
+const radius = ref(75) // Radius kantor dalam meter
 
-// const { coords } = useGeolocation() // Tidak digunakan langsung lagi untuk jarak
-// const koordinat = computed(() => coords.value) // Tidak digunakan langsung lagi
+// Deteksi lokasi dari @vueuse/core
+const { coords, error: geolocationError } = useGeolocation()
+// Deteksi status network dari @vueuse/core
+const { isOnline } = useNetwork()
 
-// watchEffect(() => { // Logika ini sekarang dihandle oleh RealtimeMap
-//   lat.value = koordinat.value?.latitude
-//   lang.value = koordinat.value?.longitude
-//   lokasiku.value = { lat: koordinat.value?.latitude, lang: koordinat.value?.longitude }
-//   jarak.value = hitungJarak(lokasiku.value, lokasiKantor.value)
-// })
+// Watcher untuk Geolocation (untuk akurasi dan error)
+watch(coords, (newCoords) => {
+  if (newCoords?.accuracy !== undefined) {
+    currentAccuracy.value = newCoords.accuracy
+    accuracyError.value = newCoords.accuracy > accuracyThreshold.value
+  }
+}, { immediate: true })
+
+// Watcher untuk error Geolocation (misal: izin ditolak)
+watch(geolocationError, (newError) => {
+  if (newError) {
+    console.error('Geolocation Error:', newError.message)
+    // Jika ada error geolocation, secara efektif anggap pengguna jauh
+    // Atau tampilkan pesan spesifik untuk mengaktifkan lokasi
+    isUserFar.value = true
+    // accuracyError.value = true // Bisa juga diatur akurasi error
+  } else {
+    // Reset error jika lokasi berhasil didapat kembali
+    // accuracyError.value = false
+  }
+}, { immediate: true })
+
+// Watcher untuk status online
+watch(isOnline, (onlineStatus) => {
+  offlineError.value = !onlineStatus
+  if (!onlineStatus) {
+    console.warn('Anda sedang offline. Koneksi internet diperlukan untuk absen.')
+  }
+}, { immediate: true })
 
 // Handler dari RealtimeMap
 const updateDistance = (newDistance) => {
@@ -134,16 +170,11 @@ function onDecodeString (val) {
     jam: props.jam,
     status: props.kondisi,
     kategory_id: props.kategory,
-    lokasi: 'ok', // TODO: Ganti dengan lokasi GPS aktual dari useGeolocation
-    latitude: null, // Placeholder
-    longitude: null // Placeholder
+    lokasi: 'ok',
+    latitude: coords.value?.latitude,
+    longitude: coords.value?.longitude,
+    accuracy: coords.value?.accuracy
   }
-
-  // Ambil lokasi saat ini dari useGeolocation untuk dikirim ke server
-  // Ini penting agar server bisa memvalidasi ulang lokasi
-  const { coords } = useGeolocation()
-  formData.latitude = coords.value?.latitude
-  formData.longitude = coords.value?.longitude
 
   kirimQr.value = true
   waiting.value = true
@@ -154,35 +185,17 @@ function onDecodeString (val) {
 async function sendData (data) {
   console.log('sendData', data)
 
-  // try {
-  //   await api.post('/v2/absensi/scan/qr', data)
-  //   props.kondisi === 'masuk' ? saveStore('checkIn') : saveStore('checkOut')
-  // } catch (error) {
-  //   err.value = 'Ada Kesalahan Harap Ulangi'
-  // } finally {
-  //   waiting.value = false
-  // }
+  try {
+    await api.post('/v2/absensi/scan/qr', data)
+    props.kondisi === 'masuk' ? saveStore('checkIn') : saveStore('checkOut')
+  } catch (error) {
+    err.value = 'Ada Kesalahan Harap Ulangi'
+  } finally {
+    waiting.value = false
+  }
 }
 // --- End QR Scanner Logic ---
 
-// function hitungJarak (lokasiku, lokasiKantor) { // Tidak lagi digunakan di sini
-//   if (lokasiku?.lat === lokasiKantor?.lat && lokasiku?.lang === lokasiKantor?.lang) {
-//     return 0
-//   }
-//   const radlat1 = (Math.PI * lokasiku.lat) / 180
-//   const radlat2 = (Math.PI * lokasiKantor.lat) / 180
-//   const theta = lokasiku.lang - lokasiKantor.lang
-//   const radtheta = (Math.PI * theta) / 180
-//   let dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta)
-//   if (dist > 1) {
-//     dist = 1
-//   }
-//   dist = Math.acos(dist)
-//   dist = (dist * 180) / Math.PI
-//   dist = dist * 60 * 1.1515
-//   dist = dist * 1.609344 // convert miles to km
-//   return Math.trunc(dist * 1000)
-// }
 </script>
 
 <style lang="scss" scoped>
@@ -191,5 +204,9 @@ async function sendData (data) {
   height: 100%;
   background-color: $grey-2;
   overflow: hidden;
+}
+
+.f-12 {
+  font-size: 0.75rem; /* Ukuran font yang lebih kecil */
 }
 </style>
