@@ -1,56 +1,57 @@
 <template>
   <div class="scanner-container">
+    <video ref="video" autoplay class="scanner-video"></video>
     <div v-if="error" class="error-message">
       <p>{{ error }}</p>
-      <button @click="resetScanner">Coba Lagi</button>
+      <button @click="startScan">Coba Lagi</button>
     </div>
-    <qrcode-stream v-else @decode="onDecode" @init="onInit" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { QrcodeStream } from 'qrcode-reader-vue3'
+/* global BarcodeDetector */
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useUserMedia } from '@vueuse/core'
 
+const video = ref(null)
 const error = ref(null)
 const emit = defineEmits(['decode'])
 
-const onDecode = (decodedString) => {
-  console.log('ScannerComponent: QR Code berhasil didekode:', decodedString)
-  emit('decode', decodedString)
-}
+const { stream, start: startUserMedia, stop: stopUserMedia } = useUserMedia({
+  constraints: { video: { facingMode: 'environment' } }
+})
 
-const onInit = async (promise) => {
-  console.log('ScannerComponent: Inisialisasi kamera dimulai...')
+const startScan = async () => {
+  error.value = null
   try {
-    await promise
-    console.log('ScannerComponent: Inisialisasi kamera berhasil.')
-  } catch (err) {
-    console.error('ScannerComponent: Error saat inisialisasi kamera:', err)
-    if (err.name === 'NotAllowedError') {
-      error.value = 'Izin kamera tidak diberikan.'
-    } else if (err.name === 'NotFoundError') {
-      error.value = 'Tidak ada kamera yang ditemukan.'
-    } else if (err.name === 'NotSupportedError') {
-      error.value = 'Konteks aman (HTTPS, localhost) diperlukan.'
-    } else if (err.name === 'NotReadableError') {
-      error.value = 'Kamera sedang digunakan oleh aplikasi lain.'
-    } else if (err.name === 'OverconstrainedError') {
-      error.value = 'Kamera yang terpasang tidak sesuai.'
-    } else if (err.name === 'StreamApiNotSupportedError') {
-      error.value = 'Stream API tidak didukung di browser ini.'
-    } else if (err.name === 'InsecureContextError') {
-      error.value = 'Akses kamera hanya untuk konteks aman (HTTPS atau localhost).'
-    } else {
-      error.value = `Error: ${err.message}`
+    await startUserMedia()
+    if (stream.value) {
+      video.value.srcObject = stream.value
+      const barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] })
+      const checkBarcode = async () => {
+        if (video.value) {
+          const barcodes = await barcodeDetector.detect(video.value)
+          if (barcodes.length > 0) {
+            emit('decode', barcodes[0].rawValue)
+            stopUserMedia()
+          } else {
+            requestAnimationFrame(checkBarcode)
+          }
+        }
+      }
+      requestAnimationFrame(checkBarcode)
     }
+  } catch (err) {
+    error.value = 'Tidak dapat memulai kamera. Pastikan Anda memberikan izin.'
+    console.error(err)
   }
 }
 
-const resetScanner = () => {
-  console.log('ScannerComponent: Resetting scanner.')
-  error.value = null
-}
+onMounted(startScan)
+
+onUnmounted(() => {
+  stopUserMedia()
+})
 </script>
 
 <style scoped>
@@ -58,6 +59,13 @@ const resetScanner = () => {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+}
+
+.scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .error-message {
