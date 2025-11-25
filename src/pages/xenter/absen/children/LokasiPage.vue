@@ -1,22 +1,24 @@
 <template>
   <q-page class="column fit absolute-top flex-center bg-white shadow-4" style="overflow: hidden;">
-    <div class="absolute-bottom full-width z-top">
-      <q-card>
-        <q-card-section>
-          <div class="column flex-center">
-            <div class="q-my-lg text-weight-bold">
-              <span v-if="jarak > radius">Kamu Jauh Dari Kantor</span>
-              <span v-else>Kamu Berada di Area Kantor</span>
+    <div v-if="!scan">
+      <div class="absolute-bottom full-width z-top">
+        <q-card>
+          <q-card-section>
+            <div class="column flex-center">
+              <div class="q-my-lg text-weight-bold">
+                <span v-if="jarak > radius">Kamu Jauh Dari Kantor</span>
+                <span v-else>Kamu Berada di Area Kantor</span>
+              </div>
+              <div class="q-gutter-md">
+                <q-btn class="q-mb-lg" color="negative" to="/absen">Kembali</q-btn>
+                <q-btn class="q-mb-lg" color="primary" @click="scan = true">Lanjut Absen</q-btn>
+              </div>
             </div>
-            <div class="q-gutter-md">
-              <q-btn class="q-mb-lg" color="negative" to="/absen">Kembali</q-btn>
-              <q-btn class="q-mb-lg" color="primary" @click="scan = true">Lanjut Absen</q-btn>
-            </div>
-          </div>
-        </q-card-section>
-      </q-card>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div ref="mapRef" class="absolute-top fit"></div>
     </div>
-    <div ref="mapRef" class="absolute-top fit"></div>
 
     <q-dialog v-model="scan" persistent :maximized="true" transition-show="slide-up" transition-hide="slide-down">
       <q-card class="bg-dark text-white full-height full-width">
@@ -43,6 +45,7 @@ import { computed, ref, watchEffect } from 'vue'
 import { useGeolocation } from '@vueuse/core'
 import ScannerComponent from 'src/components/ScannerComponent.vue'
 import { useRouter } from 'vue-router'
+// eslint-disable-next-line no-unused-vars
 import { api } from 'src/boot/axios'
 import { useAbsenContext } from 'src/pages/xenter/absen/absenContext'
 
@@ -75,6 +78,7 @@ watchEffect(() => {
 
 // --- QR Scanner Logic ---
 const router = useRouter()
+// eslint-disable-next-line no-unused-vars
 const { saveStore } = useAbsenContext()
 const waiting = ref(false)
 const kirimQr = ref(false)
@@ -85,6 +89,8 @@ function backTo () {
 }
 
 function onDecodeString (val) {
+  console.log('hasil decode', val)
+
   const formData = {
     qr: val,
     tanggal: props.tanggal,
@@ -95,18 +101,21 @@ function onDecodeString (val) {
   }
   kirimQr.value = true
   waiting.value = true
+
   sendData(formData)
 }
 
 async function sendData (data) {
-  try {
-    await api.post('/v2/absensi/scan/qr', data)
-    props.kondisi === 'masuk' ? saveStore('checkIn') : saveStore('checkOut')
-  } catch (error) {
-    err.value = 'Ada Kesalahan Harap Ulangi'
-  } finally {
-    waiting.value = false
-  }
+  console.log('sendData', data)
+
+  // try {
+  //   await api.post('/v2/absensi/scan/qr', data)
+  //   props.kondisi === 'masuk' ? saveStore('checkIn') : saveStore('checkOut')
+  // } catch (error) {
+  //   err.value = 'Ada Kesalahan Harap Ulangi'
+  // } finally {
+  //   waiting.value = false
+  // }
 }
 // --- End QR Scanner Logic ---
 
