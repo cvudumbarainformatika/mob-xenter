@@ -58,9 +58,9 @@
                 </div>
 
                 <!-- Informasi Jam Absen -->
-                <div v-if="scheduleStorrage?.jamMasuk || scheduleStorrage?.jamPulang" class="q-mt-lg text-grey-8">
-                  <div v-if="scheduleStorrage.jamMasuk">Jam Masuk: {{ scheduleStorrage.jamMasuk }}</div>
-                  <div v-if="scheduleStorrage.jamPulang">Jam Pulang: {{ scheduleStorrage.jamPulang }}</div>
+                <div v-if="scheduleStorrage?.mulaiWaktuMasuk || scheduleStorrage?.mulaiWaktuPulang" class="q-mt-lg text-grey-8">
+                  <div v-if="scheduleStorrage.mulaiWaktuMasuk">Jam Masuk: {{ dayjs(scheduleStorrage.mulaiWaktuMasuk).format('HH:mm') }}</div>
+                  <div v-if="scheduleStorrage.mulaiWaktuPulang">Jam Pulang: {{ dayjs(scheduleStorrage.mulaiWaktuPulang).format('HH:mm') }}</div>
                 </div>
               </div>
               <div v-else class="column flex-center">
@@ -144,8 +144,8 @@ const shouldAnimateBell = computed(() => {
   console.log('scheduleStorrage?.statusStorrage:', scheduleStorrage?.statusStorrage)
   console.log('cond.value:', cond.value)
   console.log('hasAbsen.value:', hasAbsen.value)
-  console.log('scheduleStorrage?.jamMasuk:', scheduleStorrage?.jamMasuk)
-  console.log('scheduleStorrage?.jamPulang:', scheduleStorrage?.jamPulang)
+  console.log('scheduleStorrage?.mulaiWaktuMasuk:', scheduleStorrage?.mulaiWaktuMasuk) // Perbaikan
+  console.log('scheduleStorrage?.mulaiWaktuPulang:', scheduleStorrage?.mulaiWaktuPulang) // Perbaikan
 
   if (scheduleStorrage?.statusStorrage === '1') {
     console.log('shouldAnimateBell: Tidak ada jadwal (statusStorrage === 1)')
@@ -154,14 +154,14 @@ const shouldAnimateBell = computed(() => {
   const now = dayjs()
   let targetTime = null
 
-  if (cond.value === 'masuk' && hasAbsen.value !== 'checkIn' && scheduleStorrage?.jamMasuk) {
-    targetTime = dayjs(tanggalAbsen.value + ' ' + scheduleStorrage.jamMasuk)
-  } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage?.jamPulang) {
-    targetTime = dayjs(tanggalAbsen.value + ' ' + scheduleStorrage.jamPulang)
+  if (cond.value === 'masuk' && hasAbsen.value !== 'checkIn' && scheduleStorrage?.mulaiWaktuMasuk) {
+    targetTime = dayjs(scheduleStorrage.mulaiWaktuMasuk) // Gunakan langsung
+  } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage?.mulaiWaktuPulang) {
+    targetTime = dayjs(scheduleStorrage.mulaiWaktuPulang) // Gunakan langsung
   }
 
-  console.log('shouldAnimateBell: targetTime:', targetTime ? targetTime.format('HH:mm:ss') : 'null')
-  console.log('shouldAnimateBell: now:', now.format('HH:mm:ss'))
+  console.log('shouldAnimateBell: targetTime:', targetTime ? targetTime.format('YYYY-MM-DD HH:mm:ss') : 'null')
+  console.log('shouldAnimateBell: now:', now.format('YYYY-MM-DD HH:mm:ss'))
   console.log('shouldAnimateBell: now.isAfter(targetTime):', targetTime ? now.isAfter(targetTime) : 'N/A')
 
   return targetTime && now.isAfter(targetTime)
@@ -182,15 +182,15 @@ const calculateLateTime = () => {
   let targetTime = null
   let absenType = null
 
-  if (cond.value === 'masuk' && hasAbsen.value !== 'checkIn' && scheduleStorrage?.jamMasuk) {
-    targetTime = dayjs(tanggalAbsen.value + ' ' + scheduleStorrage.jamMasuk)
+  if (cond.value === 'masuk' && hasAbsen.value !== 'checkIn' && scheduleStorrage?.mulaiWaktuMasuk) {
+    targetTime = dayjs(scheduleStorrage.mulaiWaktuMasuk) // Gunakan langsung
     absenType = 'masuk'
-  } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage?.jamPulang) {
-    targetTime = dayjs(tanggalAbsen.value + ' ' + scheduleStorrage.jamPulang)
+  } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage?.mulaiWaktuPulang) {
+    targetTime = dayjs(scheduleStorrage.mulaiWaktuPulang) // Gunakan langsung
     absenType = 'pulang'
   }
-  console.log('calculateLateTime: targetTime:', targetTime ? targetTime.format('HH:mm:ss') : 'null')
-  console.log('calculateLateTime: now:', now.format('HH:mm:ss'))
+  console.log('calculateLateTime: targetTime:', targetTime ? targetTime.format('YYYY-MM-DD HH:mm:ss') : 'null')
+  console.log('calculateLateTime: now:', now.format('YYYY-MM-DD HH:mm:ss'))
   console.log('calculateLateTime: now.isAfter(targetTime):', targetTime ? now.isAfter(targetTime) : 'N/A')
 
   if (targetTime && now.isAfter(targetTime)) {
