@@ -1,34 +1,7 @@
 <template>
-  <div class="relative-position full-width full-height" style="height:30vh">
+  <div class="relative-position full-width full-height">
     <!-- Map container -->
-    <div id="map" class="full-width" style="height:30vh; z-index:0"></div>
-
-    <!-- <div class="absolute-top-right q-pa-sm">
-      <q-btn
-        color="primary" icon="gps_fixed" label="Tracking" @click="startTracking" />
-    </div> -->
-    <!-- Info jarak -->
-    <div
-      class="absolute-bottom q-pa-sm"
-      style="z-index:99 !important"
-    >
-      <div>
-        📍 Jarak ke kantor:
-        <span
-          :class="!store.isFar ? 'text-primary' : 'text-negative'"
-        >
-          {{ distance.toFixed(1) }} m
-        </span>
-      </div>
-      <div>
-        Status:
-        <span
-          :class="!store.isFar ? 'text-primary' : 'text-negative'"
-        >
-          {{ !store.isFar ? 'Di dalam area kantor' : 'Di luar area' }}
-        </span>
-      </div>
-    </div>
+    <div id="map" class="full-width full-height" style="z-index:0"></div>
   </div>
 </template>
 
@@ -38,24 +11,29 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const props = defineProps({
-  store: {
+  kantorPos: {
     type: Object,
-    default: null
+    required: true,
+    default: () => ({ lat: -7.7449802744747185, lng: 113.210602 })
+  },
+  radiusKantor: {
+    type: Number,
+    default: 75 // dalam meter
   }
 })
+
+const emit = defineEmits(['update:distance', 'update:isFar'])
 
 const map = ref(null)
 const userMarker = ref(null)
 const accuracyCircle = ref(null)
 const watchId = ref(null)
-const isTracking = ref(false)
 
 const distance = ref(0)
-const radiusKantor = 75 // dalam meter
-const kantorPos = { lat: -7.7449802744747185, lng: 113.210602 } // posisi kantor -7.7449802744747185, 113.21060249132205
+const isFar = ref(true)
 
 const defaultZoom = 16
-const defaultPosition = [kantorPos.lat, kantorPos.lng]
+const defaultPosition = [props.kantorPos.lat, props.kantorPos.lng]
 
 onMounted(() => {
   map.value = L.map('map', {
@@ -70,7 +48,7 @@ onMounted(() => {
 
   // Tandai area kantor di peta (radius biru)
   L.circle(defaultPosition, {
-    radius: radiusKantor,
+    radius: props.radiusKantor,
     color: 'green',
     fillOpacity: 0.1
   }).addTo(map.value)
@@ -80,11 +58,10 @@ onMounted(() => {
 
 const startTracking = () => {
   if (!navigator.geolocation) {
-    alert('Geolocation tidak didukung di perangkat ini.')
+    console.error('Geolocation tidak didukung di perangkat ini.')
+    emit('update:isFar', true) // Anggap jauh jika geolocation tidak didukung
     return
   }
-
-  isTracking.value = true
 
   watchId.value = navigator.geolocation.watchPosition(
     (pos) => {
@@ -93,8 +70,7 @@ const startTracking = () => {
     },
     (err) => {
       console.error('Geolocation error:', err)
-      props.store.setIsFar(true)
-      alert('Gagal mendapatkan lokasi. Pastikan izin lokasi aktif.')
+      emit('update:isFar', true)
     },
     {
       enableHighAccuracy: true,
@@ -109,14 +85,14 @@ const stopTracking = () => {
     navigator.geolocation.clearWatch(watchId.value)
     watchId.value = null
   }
-  isTracking.value = false
 }
 
 const updatePosition = (lat, lng, accuracy) => {
   if (!map.value) return
 
   // Hitung jarak user ke kantor
-  distance.value = getDistanceFromLatLonInM(lat, lng, kantorPos.lat, kantorPos.lng)
+  distance.value = getDistanceFromLatLonInM(lat, lng, props.kantorPos.lat, props.kantorPos.lng)
+  emit('update:distance', distance.value)
 
   // Buat / update marker user
   if (!userMarker.value) {
@@ -164,15 +140,8 @@ function getDistanceFromLatLonInM (lat1, lon1, lat2, lon2) {
 }
 
 watch(distance, (newValue) => {
-  // console.log('watch distance', newValue);
-
-  if (newValue <= radiusKantor) {
-    props.store.setIsFar(false)
-  } else {
-    props.store.setIsFar(true)
-  }
-  // console.log('watch anda jauh dari kantor', props.store.isFar)
-  console.log(props.store.isFar ? 'anda jauh dari kantor' : 'anda di Area kantor')
+  isFar.value = newValue > props.radiusKantor
+  emit('update:isFar', isFar.value)
 },
 {
   immediate: true
