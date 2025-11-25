@@ -139,7 +139,17 @@ const hasAbsen = computed(() => {
 })
 
 const shouldAnimateBell = computed(() => {
-  if (scheduleStorrage?.statusStorrage === '1') return false // Tidak ada jadwal
+  console.log('--- shouldAnimateBell Debug ---')
+  console.log('scheduleStorrage?.statusStorrage:', scheduleStorrage?.statusStorrage)
+  console.log('cond.value:', cond.value)
+  console.log('hasAbsen.value:', hasAbsen.value)
+  console.log('scheduleStorrage?.jamMasuk:', scheduleStorrage?.jamMasuk)
+  console.log('scheduleStorrage?.jamPulang:', scheduleStorrage?.jamPulang)
+
+  if (scheduleStorrage?.statusStorrage === '1') {
+    console.log('shouldAnimateBell: Tidak ada jadwal (statusStorrage === 1)')
+    return false // Tidak ada jadwal
+  }
   const now = dayjs()
   let targetTime = null
 
@@ -148,6 +158,10 @@ const shouldAnimateBell = computed(() => {
   } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage?.jamPulang) {
     targetTime = dayjs(tanggalAbsen.value + ' ' + scheduleStorrage.jamPulang)
   }
+
+  console.log('shouldAnimateBell: targetTime:', targetTime ? targetTime.format('HH:mm:ss') : 'null')
+  console.log('shouldAnimateBell: now:', now.format('HH:mm:ss'))
+  console.log('shouldAnimateBell: now.isAfter(targetTime):', targetTime ? now.isAfter(targetTime) : 'N/A')
 
   return targetTime && now.isAfter(targetTime)
 })
@@ -174,6 +188,9 @@ const calculateLateTime = () => {
     targetTime = dayjs(tanggalAbsen.value + ' ' + scheduleStorrage.jamPulang)
     absenType = 'pulang'
   }
+  console.log('calculateLateTime: targetTime:', targetTime ? targetTime.format('HH:mm:ss') : 'null')
+  console.log('calculateLateTime: now:', now.format('HH:mm:ss'))
+  console.log('calculateLateTime: now.isAfter(targetTime):', targetTime ? now.isAfter(targetTime) : 'N/A')
 
   if (targetTime && now.isAfter(targetTime)) {
     const diffSeconds = now.diff(targetTime, 'second')
