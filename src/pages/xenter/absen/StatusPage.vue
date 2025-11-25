@@ -173,6 +173,12 @@ const updateTime = () => {
 }
 
 const calculateLateTime = () => {
+  console.log('--- calculateLateTime Debug ---')
+  console.log('calculateLateTime: cond.value:', cond.value)
+  console.log('calculateLateTime: hasAbsen.value:', hasAbsen.value)
+  console.log('calculateLateTime: scheduleStorrage?.mulaiWaktuMasuk:', scheduleStorrage?.mulaiWaktuMasuk)
+  console.log('calculateLateTime: scheduleStorrage?.mulaiWaktuPulang:', scheduleStorrage?.mulaiWaktuPulang)
+
   if (scheduleStorrage?.statusStorrage === '1') {
     lateTimeMessage.value = null
     return
