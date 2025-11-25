@@ -1,6 +1,16 @@
 <template>
   <div class="scanner-container">
     <video ref="video" autoplay muted playsinline class="scanner-video"></video>
+    <q-btn
+      class="absolute-top-right q-ma-md"
+      color="white"
+      size="lg"
+      icon="close"
+      flat
+      round
+      @click="emit('close')"
+      style="z-index: 100;"
+    />
     <div v-if="error" class="error-message">
       <p>{{ error }}</p>
       <button @click="startScan">Coba Lagi</button>
@@ -19,7 +29,7 @@ import { useUserMedia } from '@vueuse/core'
 const video = ref(null)
 const error = ref(null)
 const isScanning = ref(false)
-const emit = defineEmits(['decode'])
+const emit = defineEmits(['decode', 'close']) // Tambahkan 'close' event
 
 const { stream, start: startUserMedia, stop: stopUserMedia } = useUserMedia({
   constraints: { video: { facingMode: 'environment' } }

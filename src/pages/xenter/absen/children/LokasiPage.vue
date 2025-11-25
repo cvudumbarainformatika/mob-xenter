@@ -34,7 +34,7 @@
             <q-btn label="Kembali" color="primary" size="lg" @click="backTo()" />
           </div>
         </div>
-        <ScannerComponent v-else @decode="onDecodeString" />
+        <ScannerComponent v-else @decode="onDecodeString" @close="scan = false" />
       </q-card>
     </q-dialog>
   </q-page>
