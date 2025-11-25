@@ -40,19 +40,30 @@ const startScan = async () => {
     if (stream.value && video.value) {
       video.value.srcObject = stream.value
       video.value.onloadedmetadata = () => {
-        barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] })
-        isScanning.value = true
-        requestAnimationFrame(checkBarcode)
+        // Beri sedikit waktu agar video stabil sebelum memulai deteksi
+        setTimeout(() => {
+          barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] })
+          isScanning.value = true
+          requestAnimationFrame(checkBarcode)
+        }, 100) // Penundaan 100ms
       }
     }
   } catch (err) {
     error.value = 'Tidak dapat memulai kamera. Pastikan Anda memberikan izin.'
-    console.error(err)
+    console.error('Error saat memulai kamera:', err)
   }
 }
 
 const checkBarcode = async () => {
-  if (isScanning.value && video.value && barcodeDetector && video.value.readyState >= 2) { // HAVE_CURRENT_DATA
+  console.log('checkBarcode: readyState', video.value.readyState, 'paused', video.value.paused, 'ended', video.value.ended)
+  if (
+    isScanning.value &&
+    video.value &&
+    barcodeDetector &&
+    video.value.readyState >= 2 && // Minimal HAVE_CURRENT_DATA
+    !video.value.paused && // Pastikan video tidak di-pause
+    !video.value.ended // Pastikan video belum selesai
+  ) {
     try {
       const barcodes = await barcodeDetector.detect(video.value)
       if (barcodes.length > 0) {
@@ -62,22 +73,32 @@ const checkBarcode = async () => {
         requestAnimationFrame(checkBarcode)
       }
     } catch (e) {
-      console.error('Error saat mendeteksi barcode:', e)
-      // Lanjutkan mencoba jika tidak ada error fatal
-      requestAnimationFrame(checkBarcode)
+      console.error('Error saat mendeteksi barcode (di dalam try-catch):', e)
+      // Lanjutkan mencoba jika bukan error fatal yang mengharuskan penghentian
+      if (e.name === 'InvalidStateError') {
+        // InvalidStateError bisa terjadi jika elemen tidak valid, coba lagi
+        requestAnimationFrame(checkBarcode)
+      } else {
+        // Error lain mungkin perlu penanganan lebih lanjut atau stop scan
+        error.value = `Deteksi error: ${e.message}`
+        stopScan()
+      }
     }
+  } else if (isScanning.value) {
+    // Jika masih scanning tapi kondisi video belum siap, coba lagi frame berikutnya
+    requestAnimationFrame(checkBarcode)
   }
 }
 
 const stopScan = () => {
   isScanning.value = false
   stopUserMedia()
+  console.log('stopScan: Kamera dihentikan.')
 }
 
 onMounted(startScan)
 
 onUnmounted(stopScan)
-
 </script>
 
 <style scoped>
