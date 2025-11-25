@@ -66,7 +66,7 @@ const startScan = async () => {
         setTimeout(() => {
           isScanning.value = true
           animationFrameId = requestAnimationFrame(checkBarcode)
-        }, 100)
+        }, 100) // Penundaan 100ms
       }
       // Jika metadata sudah dimuat karena video sudah aktif
       if (video.value.readyState >= 1) { // HAVE_METADATA
@@ -82,9 +82,16 @@ const startScan = async () => {
 }
 
 const checkBarcode = async () => {
+  // Tambahkan pemeriksaan ini di awal
+  if (!video.value) {
+    console.log('checkBarcode: video.value adalah null, menghentikan loop deteksi.')
+    cancelAnimationFrame(animationFrameId)
+    return
+  }
+
   console.log('checkBarcode: readyState', video.value.readyState, 'paused', video.value.paused, 'ended', video.value.ended, 'videoWidth', video.value.videoWidth, 'videoHeight', video.value.videoHeight)
 
-  if (!isScanning.value || !video.value || !barcodeDetector) {
+  if (!isScanning.value || !barcodeDetector) {
     cancelAnimationFrame(animationFrameId)
     return
   }
