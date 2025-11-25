@@ -9,43 +9,48 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { QrcodeStream } from 'qrcode-reader-vue3';
+import { ref } from 'vue'
+import { QrcodeStream } from 'qrcode-reader-vue3'
 
-const error = ref(null);
-const emit = defineEmits(['decode']);
+const error = ref(null)
+const emit = defineEmits(['decode'])
 
 const onDecode = (decodedString) => {
-  emit('decode', decodedString);
-};
+  console.log('ScannerComponent: QR Code berhasil didekode:', decodedString)
+  emit('decode', decodedString)
+}
 
 const onInit = async (promise) => {
+  console.log('ScannerComponent: Inisialisasi kamera dimulai...')
   try {
-    await promise;
+    await promise
+    console.log('ScannerComponent: Inisialisasi kamera berhasil.')
   } catch (err) {
+    console.error('ScannerComponent: Error saat inisialisasi kamera:', err)
     if (err.name === 'NotAllowedError') {
-      error.value = 'Izin kamera tidak diberikan.';
+      error.value = 'Izin kamera tidak diberikan.'
     } else if (err.name === 'NotFoundError') {
-      error.value = 'Tidak ada kamera yang ditemukan.';
+      error.value = 'Tidak ada kamera yang ditemukan.'
     } else if (err.name === 'NotSupportedError') {
-      error.value = 'Konteks aman (HTTPS, localhost) diperlukan.';
+      error.value = 'Konteks aman (HTTPS, localhost) diperlukan.'
     } else if (err.name === 'NotReadableError') {
-      error.value = 'Kamera sedang digunakan oleh aplikasi lain.';
+      error.value = 'Kamera sedang digunakan oleh aplikasi lain.'
     } else if (err.name === 'OverconstrainedError') {
-      error.value = 'Kamera yang terpasang tidak sesuai.';
+      error.value = 'Kamera yang terpasang tidak sesuai.'
     } else if (err.name === 'StreamApiNotSupportedError') {
-      error.value = 'Stream API tidak didukung di browser ini.';
+      error.value = 'Stream API tidak didukung di browser ini.'
     } else if (err.name === 'InsecureContextError') {
-      error.value = 'Akses kamera hanya untuk konteks aman (HTTPS atau localhost).';
+      error.value = 'Akses kamera hanya untuk konteks aman (HTTPS atau localhost).'
     } else {
-      error.value = `Error: ${err.message}`;
+      error.value = `Error: ${err.message}`
     }
   }
-};
+}
 
 const resetScanner = () => {
-  error.value = null;
-};
+  console.log('ScannerComponent: Resetting scanner.')
+  error.value = null
+}
 </script>
 
 <style scoped>
