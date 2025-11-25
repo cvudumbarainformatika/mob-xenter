@@ -19,42 +19,7 @@
           @init="onInit"
           @decode="onDecode"
         >
-
-        <!-- Overlay Fokus Tengah -->
-         <div
-          v-show="!scanned"
-          class="absolute-full flex flex-center"
-          style="pointer-events: none;"
-        >
-          <!-- Lapisan Gelap -->
-          <!-- <div
-            class="absolute-full"
-            style="background: rgba(0,0,0,0.7);"
-          ></div> -->
-
-          <!-- Kotak Fokus -->
-          <div
-            class="relative rounded-borders overflow-hidden"
-            style="
-              width: 256px;
-              height: 256px;
-              border-radius: 16px;
-              border: 1px solid rgba(255,255,255,0.2);
-              box-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
-              z-index: 10;
-            "
-          >
-            <!-- Corner Brackets -->
-            <div class="corner top left"></div>
-            <div class="corner top right"></div>
-            <div class="corner bottom left"></div>
-            <div class="corner bottom right"></div>
-
-            <!-- Laser -->
-            <div class="laser"></div>
-          </div>
-
-        </div>
+        <div style="color: red" class="absolute-center">Scanning...</div>
       </qrcode-stream>
 
         <q-btn class="absolute-top-right" color="white" size="lg" icon="close" flat round @click="emit('close')" />
@@ -214,24 +179,7 @@ function onError (error) {
   }, 1000)
 }
 
-async function onDetect (promise) {
-  try {
-    const {
-      content, // decoded String
-      location // QR code coordinates
-    } = await promise
-
-    // ...
-    console.log('content', content)
-    console.log('location', location)
-    // content.value = content
-    // location.value = location
-  } catch (error) {
-    // ...
-    console.log(error)
-  }
-}
-
+// eslint-disable-next-line no-unused-vars
 </script>
 
 <style scoped>
