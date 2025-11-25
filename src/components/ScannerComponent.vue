@@ -1,9 +1,12 @@
 <template>
   <div class="scanner-container">
-    <video ref="video" autoplay class="scanner-video"></video>
+    <video ref="video" autoplay muted playsinline class="scanner-video"></video>
     <div v-if="error" class="error-message">
       <p>{{ error }}</p>
       <button @click="startScan">Coba Lagi</button>
+    </div>
+    <div v-if="!error && !isScanning" class="loading-message">
+      <p>Mempersiapkan kamera...</p>
     </div>
   </div>
 </template>
@@ -15,31 +18,32 @@ import { useUserMedia } from '@vueuse/core'
 
 const video = ref(null)
 const error = ref(null)
+const isScanning = ref(false)
 const emit = defineEmits(['decode'])
 
 const { stream, start: startUserMedia, stop: stopUserMedia } = useUserMedia({
   constraints: { video: { facingMode: 'environment' } }
 })
 
+let barcodeDetector
+
 const startScan = async () => {
   error.value = null
+  isScanning.value = false
   try {
+    if (!('BarcodeDetector' in window)) {
+      error.value = 'Barcode Detector API tidak didukung di browser ini.'
+      return
+    }
+
     await startUserMedia()
-    if (stream.value) {
+    if (stream.value && video.value) {
       video.value.srcObject = stream.value
-      const barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] })
-      const checkBarcode = async () => {
-        if (video.value) {
-          const barcodes = await barcodeDetector.detect(video.value)
-          if (barcodes.length > 0) {
-            emit('decode', barcodes[0].rawValue)
-            stopUserMedia()
-          } else {
-            requestAnimationFrame(checkBarcode)
-          }
-        }
+      video.value.onloadedmetadata = () => {
+        barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] })
+        isScanning.value = true
+        requestAnimationFrame(checkBarcode)
       }
-      requestAnimationFrame(checkBarcode)
     }
   } catch (err) {
     error.value = 'Tidak dapat memulai kamera. Pastikan Anda memberikan izin.'
@@ -47,11 +51,33 @@ const startScan = async () => {
   }
 }
 
+const checkBarcode = async () => {
+  if (isScanning.value && video.value && barcodeDetector && video.value.readyState >= 2) { // HAVE_CURRENT_DATA
+    try {
+      const barcodes = await barcodeDetector.detect(video.value)
+      if (barcodes.length > 0) {
+        emit('decode', barcodes[0].rawValue)
+        stopScan()
+      } else {
+        requestAnimationFrame(checkBarcode)
+      }
+    } catch (e) {
+      console.error('Error saat mendeteksi barcode:', e)
+      // Lanjutkan mencoba jika tidak ada error fatal
+      requestAnimationFrame(checkBarcode)
+    }
+  }
+}
+
+const stopScan = () => {
+  isScanning.value = false
+  stopUserMedia()
+}
+
 onMounted(startScan)
 
-onUnmounted(() => {
-  stopUserMedia()
-})
+onUnmounted(stopScan)
+
 </script>
 
 <style scoped>
@@ -60,6 +86,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background-color: #000;
 }
 
 .scanner-video {
@@ -68,15 +95,15 @@ onUnmounted(() => {
   object-fit: cover;
 }
 
-.error-message {
+.error-message, .loading-message {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: white;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
   padding: 20px;
   border-radius: 10px;
   text-align: center;
-  color: red;
 }
 </style>
