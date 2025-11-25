@@ -18,10 +18,15 @@ export function useAbsenContext (time = 1000) {
   const tanggalAbsen = ref(dayjs().locale('id').format('YYYY-MM-DD'))
   const cond = ref('idle')
   const condAbsen = ref('idle')
-  const scheduleStorrage = ref(null)
+  const scheduleStorrage = ref({ // Inisialisasi sebagai objek kosong agar properti reaktif
+    mulaiWaktuMasuk: null,
+    mulaiWaktuPulang: null,
+    stopWaktuAbsen: null,
+    statusStorrage: null,
+    kategoryStorrage: null
+  })
 
   const jadwal = useJadwal()
-  // let timerId
 
   function init () {
     const schedule = $q?.localStorage.getItem('newSchedule')
@@ -29,8 +34,9 @@ export function useAbsenContext (time = 1000) {
       cond.value = 'idle'
       cariSchedule()
     } else {
+      // Pastikan scheduleStorrage diperbarui dari localStorage
+      Object.assign(scheduleStorrage.value, schedule)
       if (cond.value === 'idle') {
-        // console.log('sdh mampir ke init')
         cond.value = 'start'
       }
     }
@@ -65,11 +71,6 @@ export function useAbsenContext (time = 1000) {
         }
 
         stopWaktuAbsen = dayjs(mulaiWaktuPulang).add(2, 'hour').format('YYYY-MM-DD HH:mm:ss') // tambah 2 jam
-
-        // console.log('masuk', mulaiWaktuMasuk)
-        // console.log('pulang', mulaiWaktuPulang)
-        // console.log('status', statusStorrage)
-        // console.log('stop waktu absen', stopWaktuAbsen)
       } else { // jika libur
         mulaiWaktuMasuk = null
         mulaiWaktuPulang = null
@@ -87,7 +88,6 @@ export function useAbsenContext (time = 1000) {
       kategoryStorrage
     }
 
-    // console.log('cari schedule ...')
     saveScheduleToStorrage(newJadwals)
   }
 
@@ -95,44 +95,58 @@ export function useAbsenContext (time = 1000) {
     cond.value = 'start'
     const asyncStorrage = $q.localStorage
     asyncStorrage.set('newSchedule', val)
+    // Pastikan scheduleStorrage diperbarui secara reaktif
+    Object.assign(scheduleStorrage.value, val)
   }
 
   function deleteSaveSchedule () {
-    // console.log('delete store')
     const asyncStorrage = $q.localStorage
     asyncStorrage.remove('newSchedule')
     cond.value = 'idle'
     saveStore('idle')
+    // Reset properti scheduleStorrage secara reaktif
+    Object.assign(scheduleStorrage.value, {
+      mulaiWaktuMasuk: null,
+      mulaiWaktuPulang: null,
+      stopWaktuAbsen: null,
+      statusStorrage: null,
+      kategoryStorrage: null
+    })
   }
 
-  // eslint-disable-next-line no-unused-vars
   const start = () => {
-    // const waktuBerjalan = dayjs().locale('id').format('YYYY-MM-DD HH:mm:ss')
     const schedule = $q?.localStorage.getItem('newSchedule')
-    scheduleStorrage.value = schedule
+
+    // Perbarui properti scheduleStorrage secara reaktif
+    if (schedule) {
+      Object.assign(scheduleStorrage.value, schedule)
+    } else {
+      // Reset jika tidak ada schedule
+      Object.assign(scheduleStorrage.value, {
+        mulaiWaktuMasuk: null,
+        mulaiWaktuPulang: null,
+        stopWaktuAbsen: null,
+        statusStorrage: null,
+        kategoryStorrage: null
+      })
+    }
+
     tgl.value = dayjs().locale('id').format('YYYY-MM-DD HH:mm:ss')
 
-    if (schedule) {
-      if (schedule.statusStorrage !== '1') {
-        const { mulaiWaktuMasuk, mulaiWaktuPulang, stopWaktuAbsen } = schedule
-        // eslint-disable-next-line no-unused-vars
-        // const starting = dayjs(tgl.value).locale('id').isSameOrBefore(mulaiWaktuMasuk, 'minute')
-        const intervalJamMasuk = dayjs(tgl.value).isBetween(mulaiWaktuMasuk, mulaiWaktuPulang, 'minute')
-        // eslint-disable-next-line no-unused-vars
-        const intervalJamPulang = dayjs(tgl.value).isBetween(mulaiWaktuPulang, stopWaktuAbsen, 'minute')
-        const finish = dayjs(tgl.value).isSameOrAfter(stopWaktuAbsen, 'hour')
-        if (intervalJamMasuk) {
-          cond.value = 'masuk'
-        } else if (intervalJamPulang) {
-          cond.value = 'pulang'
-        } else if (finish) {
-          deleteSaveSchedule()
-        }
-      } else {
+    if (scheduleStorrage.value.statusStorrage !== '1') {
+      const { mulaiWaktuMasuk, mulaiWaktuPulang, stopWaktuAbsen } = scheduleStorrage.value
+      const intervalJamMasuk = dayjs(tgl.value).isBetween(mulaiWaktuMasuk, mulaiWaktuPulang, 'minute')
+      const intervalJamPulang = dayjs(tgl.value).isBetween(mulaiWaktuPulang, stopWaktuAbsen, 'minute')
+      const finish = dayjs(tgl.value).isSameOrAfter(stopWaktuAbsen, 'hour')
+      if (intervalJamMasuk) {
+        cond.value = 'masuk'
+      } else if (intervalJamPulang) {
+        cond.value = 'pulang'
+      } else if (finish) {
         deleteSaveSchedule()
       }
-
-      // console.log('Timer is running...', schedule.statusStorrage)
+    } else {
+      deleteSaveSchedule()
     }
   }
 
@@ -159,13 +173,7 @@ export function useAbsenContext (time = 1000) {
   })
 
   watch(cond, (n, old) => {
-    // console.log('new watch', n)
-    // console.log('old watch', old)
     init()
-  })
-  watch(condAbsen, (n, old) => {
-    // console.log('new watch', n)
-    // console.log('old watch', old)
   })
 
   return {
