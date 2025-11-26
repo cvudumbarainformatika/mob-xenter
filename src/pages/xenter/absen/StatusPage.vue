@@ -1,7 +1,7 @@
 <template>
   <q-page class="page fit bg-grey-4 shadow-4">
     <div
-      v-if="bisaLogin.includes(auth.user.email)"
+      v-if="bisaLogin?.includes(auth?.user?.email)"
       class="absolute-top full-height page-effect column shadow-4"
       :class="{ 'effect-left': hasLeaveFromHere }"
     >
@@ -12,24 +12,32 @@
       <div class="col full-height relative-position">
         <div class="column full-height full-width absolute">
           <div class="col full-height">
-            <div class="column flex-center text-center q-gutter-md">
-              <div v-if="scheduleStorrage?.statusStorrage !== '1'">
+            <div class="column flex-center text-center q-gutter-md full-height">
+              <div v-if="scheduleStorrage.value?.statusStorrage !== '1'" class="q-pt-lg">
                 <!-- Waktu Saat Ini -->
                 <div class="text-h4 text-weight-bold">{{ currentTime }}</div>
-                <div class="text-h6 text-grey-7">{{ tanggalAbsen }}</div>
+                <div class="f-12 text-grey-7">{{ tanggalAbsen }}</div>
 
-                <div v-if="cond === 'masuk'">
+                <div v-if="cond === 'masuk'" class="q-pt-sm">
                   <q-icon
                     :name="hasAbsen === 'checkIn' ? 'verified' : 'notifications_active'"
                     :color="hasAbsen === 'checkIn' ? 'primary' : 'negative'"
                     :class="{ 'anim-shake': shouldAnimateBell }"
-                    size="60px"
+                    size="80px"
                   />
                   <div
                     class="f-12 text-weight-bold q-mt-md"
                     :class="hasAbsen === 'checkIn' ? 'text-primary' : 'text-negative'"
                   >
-                    {{ hasAbsen === 'checkIn' ? 'Absensi Masuk Valid' : 'Saatnya Absen Masuk' }}
+                    <!-- {{ hasAbsen === 'checkIn' ? 'Absensi Masuk Valid' : 'Saatnya Absen Masuk' }} -->
+                    <div v-if="hasAbsen === 'checkIn'">
+                      <div>Absensi Masuk Valid</div>
+                    </div>
+                    <div v-else>
+                      <div>Saatnya Absen</div>
+                      <div class="text-weight-bold text-h4">Masuk</div>
+
+                    </div>
                   </div>
                   <div v-if="lateTimeMessage && hasAbsen !== 'checkIn'" class="text-negative q-mt-sm">
                     {{ lateTimeMessage }}
@@ -46,9 +54,17 @@
                     class="f-12 text-weight-bold q-mt-md"
                     :class="hasAbsen === 'checkOut' ? 'text-primary' : 'text-negative'"
                   >
-                    {{ hasAbsen === 'checkOut' ? 'Absensi Pulang Valid' : 'Saatnya Absen Pulang' }}
+                    <!-- {{ hasAbsen === 'checkOut' ? 'Absensi Pulang Valid' : 'Saatnya Absen Pulang' }} -->
+                      <div v-if="hasAbsen === 'checkOut'">
+                        <div>Absensi Pulang Valid</div>
+                      </div>
+                      <div v-else>
+                        <div>Saatnya Absen</div>
+                        <div class="text-weight-bold text-h4">Pulang</div>
+
+                      </div>
                   </div>
-                  <div v-if="lateTimeMessage && hasAbsen !== 'checkOut'" class="text-negative q-mt-sm">
+                  <div v-if="lateTimeMessage && hasAbsen !== 'checkOut'" class="text-negative q-mt-xs">
                     {{ lateTimeMessage }}
                   </div>
                 </div>
@@ -58,9 +74,9 @@
                 </div>
 
                 <!-- Informasi Jam Absen -->
-                <div v-if="scheduleStorrage?.mulaiWaktuMasuk || scheduleStorrage?.mulaiWaktuPulang" class="q-mt-lg text-grey-8">
-                  <div v-if="scheduleStorrage.mulaiWaktuMasuk">Jam Masuk: {{ dayjs(scheduleStorrage.mulaiWaktuMasuk).format('HH:mm') }}</div>
-                  <div v-if="scheduleStorrage.mulaiWaktuPulang">Jam Pulang: {{ dayjs(scheduleStorrage.mulaiWaktuPulang).format('HH:mm') }}</div>
+                <div v-if="scheduleStorrage.value?.mulaiWaktuMasuk || scheduleStorrage.value?.mulaiWaktuPulang" class="q-mt-lg text-grey-8">
+                  <div v-if="scheduleStorrage.value.mulaiWaktuMasuk">Jam Masuk: {{ dayjs(scheduleStorrage.value.mulaiWaktuMasuk).format('HH:mm') }}</div>
+                  <div v-if="scheduleStorrage.value.mulaiWaktuPulang">Jam Pulang: {{ dayjs(scheduleStorrage.value.mulaiWaktuPulang).format('HH:mm') }}</div>
                 </div>
               </div>
               <div v-else class="column flex-center">
@@ -91,7 +107,7 @@
     <router-view v-slot="{ Component }">
       <transition appear enter-active-class="animated slideInRight" leave-active-class="animated slideOutRight">
         <component :is="Component" :key="cond" :kondisi="cond" :tanggal="tanggalAbsen" :jam="jam"
-          :kategory="scheduleStorrage?.kategoryStorrage" />
+          :kategory="scheduleStorrage.value?.kategoryStorrage" />
       </transition>
     </router-view>
   </q-page>
@@ -111,9 +127,13 @@ const hasLeaveFromHere = ref(false)
 const route = useRoute()
 const auth = useLoginXenterStore()
 
-const bisaLogin = ref([
-  '3574041305820002@app.com', 'sa@app.com', '3574031107840006@app.com', '3513176806880002@app.com'
-])
+// const bisaLogin = ref([
+//   '3574041305820002@app.com', 'sa@app.com', '3574031107840006@app.com', '3513176806880002@app.com'
+// ])
+
+const bisaLogin = computed(() => {
+  return auth.bisaLogin
+})
 
 const currentTime = ref(dayjs().format('HH:mm:ss'))
 const lateTimeMessage = ref(null)
@@ -121,14 +141,17 @@ let timeInterval = null
 
 onMounted(() => {
   hasLeaveFromHere.value = false
+
   updateTime()
   timeInterval = setInterval(updateTime, 1000)
-  console.log('mounted local', bisaLogin.value.includes(auth.user.email))
-  console.log('scheduleStorrage object:', scheduleStorrage) // Tambahan ini
+  // console.log('mounted local', bisaLogin.value.includes(auth.user.email))
+  console.log('scheduleStorrage object:', scheduleStorrage.value) // Perbaikan di sini
+
+  auth.getBisaLogin()
 })
 
 onUnmounted(() => {
-  console.log('unMounted')
+  // console.log('unMounted')
   clearInterval(setTimer)
   clearInterval(timeInterval)
 })
@@ -140,29 +163,29 @@ const hasAbsen = computed(() => {
 })
 
 const shouldAnimateBell = computed(() => {
-  console.log('--- shouldAnimateBell Debug ---')
-  console.log('scheduleStorrage?.statusStorrage:', scheduleStorrage?.statusStorrage)
-  console.log('cond.value:', cond.value)
-  console.log('hasAbsen.value:', hasAbsen.value)
-  console.log('scheduleStorrage?.mulaiWaktuMasuk:', scheduleStorrage?.mulaiWaktuMasuk) // Perbaikan
-  console.log('scheduleStorrage?.mulaiWaktuPulang:', scheduleStorrage?.mulaiWaktuPulang) // Perbaikan
+  // console.log('--- shouldAnimateBell Debug ---')
+  // console.log('scheduleStorrage.value?.statusStorrage:', scheduleStorrage.value?.statusStorrage) // Perbaikan
+  // console.log('cond.value:', cond.value)
+  // console.log('hasAbsen.value:', hasAbsen.value)
+  // console.log('scheduleStorrage.value?.mulaiWaktuMasuk:', scheduleStorrage.value?.mulaiWaktuMasuk) // Perbaikan
+  // console.log('scheduleStorrage.value?.mulaiWaktuPulang:', scheduleStorrage.value?.mulaiWaktuPulang) // Perbaikan
 
-  if (scheduleStorrage?.statusStorrage === '1') {
+  if (scheduleStorrage.value?.statusStorrage === '1') { // Perbaikan
     console.log('shouldAnimateBell: Tidak ada jadwal (statusStorrage === 1)')
     return false // Tidak ada jadwal
   }
   const now = dayjs()
   let targetTime = null
 
-  if (cond.value === 'masuk' && hasAbsen.value !== 'checkIn' && scheduleStorrage?.mulaiWaktuMasuk) {
-    targetTime = dayjs(scheduleStorrage.mulaiWaktuMasuk) // Gunakan langsung
-  } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage?.mulaiWaktuPulang) {
-    targetTime = dayjs(scheduleStorrage.mulaiWaktuPulang) // Gunakan langsung
+  if (cond.value === 'masuk' && hasAbsen.value !== 'checkIn' && scheduleStorrage.value?.mulaiWaktuMasuk) { // Perbaikan
+    targetTime = dayjs(scheduleStorrage.value.mulaiWaktuMasuk) // Perbaikan
+  } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage.value?.mulaiWaktuPulang) { // Perbaikan
+    targetTime = dayjs(scheduleStorrage.value.mulaiWaktuPulang) // Perbaikan
   }
 
-  console.log('shouldAnimateBell: targetTime:', targetTime ? targetTime.format('YYYY-MM-DD HH:mm:ss') : 'null')
-  console.log('shouldAnimateBell: now:', now.format('YYYY-MM-DD HH:mm:ss'))
-  console.log('shouldAnimateBell: now.isAfter(targetTime):', targetTime ? now.isAfter(targetTime) : 'N/A')
+  // console.log('shouldAnimateBell: targetTime:', targetTime ? targetTime.format('YYYY-MM-DD HH:mm:ss') : 'null')
+  // console.log('shouldAnimateBell: now:', now.format('YYYY-MM-DD HH:mm:ss'))
+  // console.log('shouldAnimateBell: now.isAfter(targetTime):', targetTime ? now.isAfter(targetTime) : 'N/A')
 
   return targetTime && now.isAfter(targetTime)
 })
@@ -173,13 +196,13 @@ const updateTime = () => {
 }
 
 const calculateLateTime = () => {
-  console.log('--- calculateLateTime Debug ---')
-  console.log('calculateLateTime: cond.value:', cond.value)
-  console.log('calculateLateTime: hasAbsen.value:', hasAbsen.value)
-  console.log('calculateLateTime: scheduleStorrage?.mulaiWaktuMasuk:', scheduleStorrage?.mulaiWaktuMasuk)
-  console.log('calculateLateTime: scheduleStorrage?.mulaiWaktuPulang:', scheduleStorrage?.mulaiWaktuPulang)
+  // console.log('--- calculateLateTime Debug ---')
+  // console.log('calculateLateTime: cond.value:', cond.value)
+  // console.log('calculateLateTime: hasAbsen.value:', hasAbsen.value)
+  // console.log('calculateLateTime: scheduleStorrage.value?.mulaiWaktuMasuk:', scheduleStorrage.value?.mulaiWaktuMasuk) // Perbaikan
+  // console.log('calculateLateTime: scheduleStorrage.value?.mulaiWaktuPulang:', scheduleStorrage.value?.mulaiWaktuPulang) // Perbaikan
 
-  if (scheduleStorrage?.statusStorrage === '1') {
+  if (scheduleStorrage.value?.statusStorrage === '1') { // Perbaikan
     lateTimeMessage.value = null
     return
   }
@@ -188,16 +211,16 @@ const calculateLateTime = () => {
   let targetTime = null
   let absenType = null
 
-  if (cond.value === 'masuk' && hasAbsen.value !== 'checkIn' && scheduleStorrage?.mulaiWaktuMasuk) {
-    targetTime = dayjs(scheduleStorrage.mulaiWaktuMasuk) // Gunakan langsung
+  if (cond.value === 'masuk' && hasAbsen.value !== 'checkIn' && scheduleStorrage.value?.mulaiWaktuMasuk) { // Perbaikan
+    targetTime = dayjs(scheduleStorrage.value.mulaiWaktuMasuk) // Perbaikan
     absenType = 'masuk'
-  } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage?.mulaiWaktuPulang) {
-    targetTime = dayjs(scheduleStorrage.mulaiWaktuPulang) // Gunakan langsung
+  } else if (cond.value === 'pulang' && hasAbsen.value !== 'checkOut' && scheduleStorrage.value?.mulaiWaktuPulang) { // Perbaikan
+    targetTime = dayjs(scheduleStorrage.value.mulaiWaktuPulang) // Perbaikan
     absenType = 'pulang'
   }
-  console.log('calculateLateTime: targetTime:', targetTime ? targetTime.format('YYYY-MM-DD HH:mm:ss') : 'null')
-  console.log('calculateLateTime: now:', now.format('YYYY-MM-DD HH:mm:ss'))
-  console.log('calculateLateTime: now.isAfter(targetTime):', targetTime ? now.isAfter(targetTime) : 'N/A')
+  // console.log('calculateLateTime: targetTime:', targetTime ? targetTime.format('YYYY-MM-DD HH:mm:ss') : 'null')
+  // console.log('calculateLateTime: now:', now.format('YYYY-MM-DD HH:mm:ss'))
+  // console.log('calculateLateTime: now.isAfter(targetTime):', targetTime ? now.isAfter(targetTime) : 'N/A')
 
   if (targetTime && now.isAfter(targetTime)) {
     const diffSeconds = now.diff(targetTime, 'second')

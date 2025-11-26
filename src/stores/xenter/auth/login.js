@@ -6,7 +6,8 @@ import { useXenterAppStore } from 'src/stores/xenter/index'
 export const useLoginXenterStore = defineStore('login-xenter', {
   state: () => ({
     token: storage.getLocalToken() ?? null,
-    user: storage.getUser() ?? null
+    user: storage.getUser() ?? null,
+    bisaLogin: []
   }),
   // getters: {
   //   doubleCount: (state) => state.counter * 2
@@ -39,6 +40,23 @@ export const useLoginXenterStore = defineStore('login-xenter', {
         console.log(error)
         app.setLoading(false)
         app.setError(error?.response?.data?.message || 'Maaf Ada Kesalahan Harap Ulangi!')
+      }
+    },
+
+    async getBisaLogin () {
+      const app = useXenterAppStore()
+      app.setLoading(true)
+      try {
+        const resp = await api.get('/v2/data/pegawai-bisa-absen-mob')
+        // console.log('getBisaLogin', resp)
+        if (resp.status === 200) {
+          this.bisaLogin = resp?.data || []
+        }
+      } catch (error) {
+        console.log(error)
+        app.setError(error?.response?.data?.message || 'Maaf Ada Kesalahan Harap Ulangi!')
+      } finally {
+        app.setLoading(false)
       }
     },
 
