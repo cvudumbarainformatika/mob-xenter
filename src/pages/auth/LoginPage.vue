@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLoginXenterStore } from 'src/stores/xenter/auth/login'
 import { useXenterAppStore } from 'src/stores/xenter'
@@ -70,24 +70,42 @@ const focused = ref(false)
 const username = ref('')
 const password = ref('')
 
+onMounted(() => {
+  auth.getBisaLogin()
+  // console.log('cek token', auth.token)
+})
+
 function getLogo () {
   return new URL('../../assets/images/logo-rsud.png', import.meta.url).href
 }
 
 function onSubmit () {
-  // console.log('ok', store)
+  // Check if it's a PWA and not iOS
+  console.log('platform', $q)
+  const bisaLogin = auth.bisaLogin || []
   const form = {
     username: username.value,
     email: username.value + '@app.com',
     password: password.value,
     device: 'ios'
   }
-  store.login(form).then(() => {
-    console.log('cek state', auth.token)
-    setTimeout(() => {
-      window.location.reload()
-    }, 100)
-  })
+
+  // Jika TIDAK iOS DAN username tidak ada di list bisaLogin → blokir
+  if (!$q.platform.is.ios && !bisaLogin.includes(username.value)) {
+    $q.notify({
+      color: 'negative',
+      message: 'Login hanya diizinkan di perangkat iOS dalam mode PWA.',
+      icon: 'report_problem'
+    })
+    // Stop the login process
+  } else {
+    store.login(form).then(() => {
+      console.log('cek state', auth.token)
+      setTimeout(() => {
+        window.location.reload()
+      }, 100)
+    })
+  }
 
   // console.log('')
   // .then(() => {
@@ -118,6 +136,7 @@ watch(token, (n, o) => {
     // router.push({ path: '/' })
   }
 }, { deep: true })
+
 </script>
 
 <style lang="scss" scoped>
