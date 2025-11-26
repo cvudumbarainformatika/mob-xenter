@@ -81,7 +81,7 @@ function getLogo () {
 
 function onSubmit () {
   // Check if it's a PWA and not iOS
-  console.log('platform', $q)
+  // console.log('platform', $q)
   const bisaLogin = auth.bisaLogin || []
   const form = {
     username: username.value,
