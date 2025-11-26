@@ -7,7 +7,7 @@ import { useAppStore } from 'src/stores/app/index'
 import { useQuasar } from 'quasar'
 import { computed } from 'vue'
 
-// INI DARI HEIGHT 800px
+// --- Existing Logic ---
 const store = useAppStore()
 const $q = useQuasar()
 $q.dark.set(false)
@@ -28,6 +28,7 @@ const txtSm = computed(() => store.txtSm + 'px')
 const txtXs = computed(() => store.txtXs + 'px')
 
 console.log('app:', store.width)
+
 </script>
 
 <style lang="scss">
@@ -134,4 +135,5 @@ $size in $sizes {
   padding-left: 5%;
   padding-right: 10%;
 }
+
 </style>

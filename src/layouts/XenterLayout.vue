@@ -40,6 +40,10 @@
       </transition>
     <!-- </q-footer> -->
 
+    <!-- PWA Components -->
+    <InstallPwaPrompt v-model="pwa.showInstallPrompt" @install="pwa.handleInstall" />
+    <AppUpdatePrompt v-model="pwa.showUpdatePrompt" @update="pwa.handleUpdate" />
+
   </q-layout>
 </template>
 
@@ -52,11 +56,29 @@ import { onMounted, ref, watch } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 // import { useXenterAppStore } from 'src/stores/xenter/index'
 
+import { usePwaStore } from 'src/stores/pwa-store'
+import InstallPwaPrompt from 'src/components/InstallPwaPrompt.vue'
+import AppUpdatePrompt from 'src/components/AppUpdatePrompt.vue'
+
+// --- PWA Store ---
+const pwa = usePwaStore()
+
 const transitionName = ref('')
 const leftDrawerOpen = ref(false)
 const rightDrawerOpen = ref(false)
 const route = useRoute()
 // const app = useXenterAppStore()
+
+onMounted(() => {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('[pwa.js] ==> `beforeinstallprompt` event DITANGKAP!')
+    console.log('[pwa.js] Mencegah prompt default browser.')
+    e.preventDefault()
+    console.log('[pwa.js] Memanggil pwa.setInstallPrompt()...')
+    pwa.setInstallPrompt(e)
+    console.log('[pwa.js] pwa.setInstallPrompt() selesai dipanggil. Status showInstallPrompt:', pwa.showInstallPrompt)
+  })
+})
 
 const $q = useQuasar()
 

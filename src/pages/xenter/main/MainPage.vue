@@ -44,7 +44,7 @@ const rekap = useRekapAbsen()
 const currentJadwal = computed(() => store.getCurrentJadwal(tgl?.value?.hari))
 
 onMounted(() => {
-  console.log('main', tgl)
+  // console.log('main', tgl)
   callFirst('loading')
 })
 

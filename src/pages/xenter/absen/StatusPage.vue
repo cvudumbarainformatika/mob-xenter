@@ -1,7 +1,7 @@
 <template>
   <q-page class="page fit bg-grey-4 shadow-4">
     <div
-      v-if="bisaLogin?.includes(auth?.user?.email)"
+      v-if="bisaLogin?.includes(auth?.user?.username)"
       class="absolute-top full-height page-effect column shadow-4"
       :class="{ 'effect-left': hasLeaveFromHere }"
     >

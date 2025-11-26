@@ -1,4 +1,8 @@
 {
+  "name": "Xenter App",
+  "short_name": "Xenter",
+  "start_url": ".",
+  "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0D5A86",
   "theme_color": "#0D5A86",
