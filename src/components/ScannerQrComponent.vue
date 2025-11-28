@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-import { QrcodeStream } from 'qrcode-reader-vue3'
+import { QrcodeStream } from 'vue-qrcode-reader'
 const emit = defineEmits(['decode', 'close'])
 
 function onDecode (val) {
