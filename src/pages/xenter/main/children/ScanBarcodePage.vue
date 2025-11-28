@@ -8,7 +8,7 @@
     </template> -->
     <template #content>
       <!-- <div class="column full-height"> -->
-      <ScannerComponent @decode="onDecodeString" @close="onErrorOk" />
+      <ScannerQrComponent @decode="onDecodeString" @close="onErrorOk" />
       <!-- </div> -->
 
     </template>
@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import ScannerComponent from '../../../../components/ScannerComponent.vue'
+import ScannerQrComponent from '../../../../components/ScannerQrComponent.vue'
 import { useScanXenterStore } from 'src/stores/xenter/scanner/scan'
 import { useRouter } from 'vue-router'
 import { useXenterAppStore } from 'src/stores/xenter'
